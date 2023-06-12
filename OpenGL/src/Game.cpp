@@ -72,7 +72,7 @@ void Game::Initialize_Pointlight()
     }
     for (int i = 0; i < POINT_LIGHTS_NUM; i++)
     {
-        pointlight.color[i] = glm::vec3(1.0f);
+        pointlight.color[i] = glm::vec3(i);
     }
     pointlight.lightintensity = keyinput.pointlight_Intensity;
 
@@ -1040,7 +1040,6 @@ void Game::Generate_Health_bar()
     shader.SetUniform1f("max_energy", my_state.max_energy);
     shader.SetUniform1f("current_energy", my_state.current_energy);
     renderer.DrawArray(vertex_arrays->quadVa, shader);
-    drawBillboard(glm::vec2(10.0f), glm::vec2(screenWidth * 0.5f, screenHeight * 0.5f), 0.5f);
     Generate_Health_bar_enemy();
 }
 
@@ -1069,7 +1068,7 @@ void Game::Generate_Health_bar_enemy()
                 renderer.DrawArray(vertex_arrays->quadVa, shader);
         }
     }
-    if (lockEnermyMode)
+    if (lockEnermyMode && lockedEnermy)
     {
         std::vector<float> aabb = lockedEnermy->aabb;
         glm::vec3 center = glm::vec3((aabb[min_x] + aabb[max_x]) * 0.5f, (aabb[min_y] + aabb[max_y]) * 0.5f, (aabb[min_z] + aabb[max_z]) * 0.5f);
@@ -1080,7 +1079,13 @@ void Game::Generate_Health_bar_enemy()
         camera.Yaw = yaw * 180.f / PI;
         camera.Pitch = pitch * 180.0f / PI;
         camera.ProcessMouseMovement(0, 0);
-        
+        drawBillboard(glm::vec2(10.0f), glm::vec2(screenWidth * 0.5f, screenHeight * 0.5f), 0.5f);
+
+    }
+    else if (keyinput.pickMode)
+    {
+        drawBillboard(glm::vec2(10.0f), glm::vec2(screenWidth * 0.5f, screenHeight * 0.5f), 0.5f);
+
     }
 }
 
@@ -1628,7 +1633,7 @@ void Game::initializeBullet()
         glm::vec3 center = glm::vec3((aabb[min_x] + aabb[max_x]) * 0.5f, (aabb[min_y] + aabb[max_y]) * 0.5f, (aabb[min_z] + aabb[max_z]) * 0.5f);
         glm::vec3 extent = glm::vec3((aabb[max_x] - aabb[min_x]) * 0.5f, (aabb[max_y] - aabb[min_y]) * 0.5f, (aabb[max_z] - aabb[min_z]) * 0.5f);
         //bt.addBox(btVector3(center.x, center.y - extent.y, center.z), btVector3(extent.x * 2, extent.y * 2, extent.z * 2));
-        bt.addCharacterCapsule(0.5f, btVector3(0, 5, 0), 1);
+        bt.addCharacterCapsule(0.5f, btVector3(0, 5, 0), 1, 100);
     }
 }
 
@@ -1679,7 +1684,7 @@ void Game::renderBtWorld(Shader& shader)
         }
         vect = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
         ModelSpace pos;
-        pos.Scale(10);
+        pos.Scale(1000);
         pos.Translate(vect);
         pos.Rotate(-90.0, glm::vec3(1.0, 0.0, 0.0));
 
@@ -1702,7 +1707,7 @@ void Game::renderBtWorld(Shader& shader)
 
 void Game::updatePositions(int direction)
 {
-    float velocity = 10 * deltaTime;
+    float velocity = camera.MovementSpeed * deltaTime * (1+ my_state.dashing);
     glm::vec3 dir = glm::vec3(0);
     glm::vec3 Front = camera.Front;
     glm::vec3 Right = camera.Right;

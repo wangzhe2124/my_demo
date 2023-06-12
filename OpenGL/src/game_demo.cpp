@@ -629,7 +629,7 @@ void checkMovement(GLFWwindow* window, Game& game)
                 if (game.my_state.current_energy > 0)
                 {
                     game.my_state.dashing = true;
-                    energy -= 0.05f;
+                    energy -= 0.1f;
                     if (energy < 0)
                         energy = 0.0f;
                 }
@@ -640,7 +640,7 @@ void checkMovement(GLFWwindow* window, Game& game)
             else
             {
                 dashing = false;
-                energy += 1.0f;
+                energy += 0.4f;
                 if (energy > 100.0f)
                     energy = 100.0f;
             }

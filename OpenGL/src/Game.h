@@ -171,14 +171,22 @@ public:
     void updateLockedModel()
     {
         std::map<float, animeModel*>::iterator it = sortedModels.begin();
-        int t;
-        if (camera.third_view)
-            t = 1;
-        else
-            t = 0;
-        if(sortedModels.size() > t)
-            it++;
-        lockedEnermy = it->second;
+        for (std::map<float, animeModel*>::iterator it = sortedModels.begin(); it != sortedModels.end(); it++)
+        {
+            std::vector<float> aabb = it->second->aabb;
+            glm::vec3 center = glm::vec3((aabb[min_x] + aabb[max_x]) * 0.5f, (aabb[min_y] + aabb[max_y]) * 0.5f, (aabb[min_z] + aabb[max_z]) * 0.5f);
+            glm::vec3 cameraPos = camera.Get_first_position();
+            glm::vec3 viewDir = glm::normalize(center - cameraPos);
+            if (glm::dot(viewDir, camera.Front) > 0.85f)
+            {
+                lockedEnermy = it->second;
+                break;
+            }
+        }
+        if (it == sortedModels.end())
+        {
+            lockedEnermy = nullptr;
+        }
     }
     bool isInFrustum(std::vector<float>& aabb);
     bool isInFrustum(glm::vec3& pointMin, glm::vec3& pointMax);
