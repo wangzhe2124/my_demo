@@ -72,7 +72,6 @@ public:
     Shader EnvCubeMap_spec_ConvolutionShader = Shader("res/shaders/EnvCubeMap_spec_Convolution.shader");
     Shader EnvCubeMap_spec_BRDF_Shader = Shader("res/shaders/EnvCubeMap_spec_BRDF.shader");
     Shader DeferedLighting_shader = Shader("res/shaders/DeferedLighting.shader");
-    //D3Shader model_geometry_shader("res/shaders/model_geomrtry.shader");
     //Shader model_instance_shader = Shader("res/shaders/model_instance.shader");
     //Shader tencil = Shader("res/shaders/single.shader");
     Shader skyboxShader = Shader("res/shaders/SkyBox.shader");
@@ -90,4 +89,5 @@ public:
     Shader Terrain_gpu_shader = Shader("res/shaders/Terrain_gpu.shader");
     Shader Health_bar_shader = Shader("res/shaders/Health_bar.shader");
     Shader Health_bar_enemy_shader = Shader("res/shaders/Health_bar_enemy.shader");
+    //Shader realTImePBR_shader = Shader("res/shaders/realtimePBR.shader");
 };

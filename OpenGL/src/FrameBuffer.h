@@ -899,6 +899,65 @@ public:
 		glViewport(0, 0, c_screenWidth, c_screenHeight);
 	}
 };
+class realTimePBRFBO
+{
+private:
+	unsigned int frameBufferId;
+	unsigned int DepthTextureId;
+	unsigned int c_screenWidth;//·Ö±æÂÊ
+	unsigned int c_screenHeight;
+public:
+	realTimePBRFBO(unsigned int c_screenWidth, unsigned int c_screenHeight) :c_screenWidth(c_screenWidth), c_screenHeight(c_screenHeight)
+	{
+		glGenFramebuffers(1, &frameBufferId);
+		glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId);
+		BindTextureBuffer();
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	}
+	void BindTextureBuffer()
+	{
+		glGenTextures(1, &DepthTextureId);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, DepthTextureId);
+		for (GLuint i = 0; i < 6; ++i)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, c_screenWidth, c_screenHeight, 0, GL_RGB, GL_FLOAT, nullptr);
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, DepthTextureId, 0);
+
+	}
+	~realTimePBRFBO()
+	{
+		glDeleteFramebuffers(1, &frameBufferId);
+		glDeleteFramebuffers(1, &DepthTextureId);
+	}
+	void Bind(int i = 0)
+	{
+		if (i == 0)
+			glBindFramebuffer(GL_FRAMEBUFFER, frameBufferId);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, DepthTextureId, 0);
+
+	}
+	void UnBind()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+	void BindTexture(unsigned int slot = 0)
+	{
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, DepthTextureId);
+	}
+	void SetViewPort()
+	{
+		glViewport(0, 0, c_screenWidth, c_screenHeight);
+	}
+};
 
 class SpotLightDepthMapFBO
 {
@@ -1297,6 +1356,7 @@ public:
 	 PointLightDepthMapFBO(1024, 1024),
 	 PointLightDepthMapFBO(1024, 1024)
 	};
+	//EnvCubeMapFBO realTimePBRfbo = EnvCubeMapFBO(1024, 1024);
 	SpotLightDepthMapFBO SpotlightMapfbo = SpotLightDepthMapFBO(1024, 1024);
 	HDRFBO hdrfbo = HDRFBO(screenWidth, screenHeight);
 	//MSAAFrameBuffer msaa = MSAAFrameBuffer(screenWidth, screenHeight, 4);

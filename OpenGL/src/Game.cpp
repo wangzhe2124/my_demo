@@ -46,11 +46,11 @@ void Game::Gaussian_Blured_Texture(int j, unsigned int times, Shader& blooming_b
 
 void Game::Update_Sun()
 {
-    float sun_height = 20;
+    float sun_height = 20000;
     float east_x = static_cast<float>(sin(glfwGetTime() * keyinput.sun_speed)) * sun_height;
     float west_y = static_cast<float>(cos(glfwGetTime() * keyinput.sun_speed)) * sun_height;
-    sun.Sun_Position = glm::vec3(east_x, west_y, -10.0f) + camera.Position;
-    sun.Sun_Direction = -glm::vec3(east_x, west_y, -10.0f);
+    sun.Sun_Position = glm::vec3(east_x, west_y, -100.0f) + camera.Position;
+    sun.Sun_Direction = -glm::vec3(east_x, west_y, -100.0f);
 }
 
 void Game::Update_Pointlight()
@@ -402,8 +402,8 @@ void Game::Generate_Defered_basicDATA()
         delete index;
     }
 
-    framebuffers->gbuffer.UnBind();
     glViewport(0, 0, screenWidth, screenHeight);
+
 }
 void Game::Generate_SSAO()
 {
@@ -593,6 +593,7 @@ void Game::Generate_SkyBox()
     shader.SetUniform3f("color", keyinput.SunColor * keyinput.SunIntensity * glm::vec3(10));
     ModelSpace dirlightspace;//太阳位置会变化，所以动态改变位置       
     dirlightspace.Translate(sun.Sun_Position);
+    dirlightspace.Scale(500);
     //dirlightspace.Scale(glm::vec3(0.3f));
     shader.SetUniformmatri4fv("model", dirlightspace.GetModelSpace());
     renderer.DrawElement(*models->Sphere.va, *models->Sphere.ib, shader);
@@ -603,8 +604,7 @@ void Game::Generate_SkyBox()
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), float(screenWidth / screenHeight), camera.near_plane, camera.far_plane);
     shaders->skyboxShader.SetUniformmatri4fv("projection", projection);
     pre_framebuffers->envcubemapFBO.BindTexture();
-    //envcubemapFBO.BindTexture();
-    //envcubemap_spec_convolutionFBO.BindTexture();
+    //framebuffers->realTimePBRfbo.BindTexture();
     renderer.DrawArray(vertex_arrays->skyboxVa, shaders->skyboxShader);
     if (keyinput.show_d3particle)
     {
@@ -801,10 +801,14 @@ void Game::Generate_EnvLight_Specular()
        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
     };
-    shaders->EnvCubeMap_spec_ConvolutionShader.Bind();
-    shaders->EnvCubeMap_spec_ConvolutionShader.SetUniformmatri4fv("projection", captureProjection);
+    Shader& shader = shaders->EnvCubeMap_spec_ConvolutionShader;
+    shader.Bind();
+    shader.SetUniformmatri4fv("projection", captureProjection);
     unsigned int maxMipLevels = 5;
-    pre_framebuffers->envcubemapFBO.BindTexture();
+    pre_framebuffers->envcubemapFBO.BindTexture(0);
+    shader.SetUniform1i("environmentMap", 0);
+    //framebuffers->realTimePBRfbo.BindTexture(1);
+    //shader.SetUniform1i("tensorMap", 1);
     for (unsigned int i = 0; i < maxMipLevels; ++i)
     {
         unsigned int mipWidth = 1024 * static_cast<unsigned int>(std::pow(0.5, i));
@@ -812,13 +816,13 @@ void Game::Generate_EnvLight_Specular()
         pre_framebuffers->envcubemap_spec_convolutionFBO.Bindmip_Renderbuffer(mipWidth, mipHeight);
         pre_framebuffers->envcubemap_spec_convolutionFBO.SetViewPort(mipWidth, mipHeight);
         float roughness = (float)i / (float)(maxMipLevels - 1);
-        shaders->EnvCubeMap_spec_ConvolutionShader.SetUniform1f("roughness", roughness);
+        shader.SetUniform1f("roughness", roughness);
         for (int j = 0; j < 6; j++)
         {
             pre_framebuffers->envcubemap_spec_convolutionFBO.Bind(j, i);
-            shaders->EnvCubeMap_spec_ConvolutionShader.SetUniformmatri4fv("view", captureViews[j]);
+            shader.SetUniformmatri4fv("view", captureViews[j]);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            renderer.DrawArray(vertex_arrays->cubeVa, shaders->EnvCubeMap_spec_ConvolutionShader);
+            renderer.DrawArray(vertex_arrays->cubeVa, shader);
         }
     }
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
@@ -1684,11 +1688,12 @@ void Game::renderBtWorld(Shader& shader)
         }
         vect = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
         ModelSpace pos;
-        pos.Scale(1000);
         pos.Translate(vect);
+        pos.Scale(1000);
+        
         pos.Rotate(-90.0, glm::vec3(1.0, 0.0, 0.0));
 
-        shader.SetUniform1f("metallic", 0.7);
+        shader.SetUniform1f("metallic", 0.8);
         shader.SetUniform1f("roughness", 0);
         textures->floor_diffuse.Bind(0);
         shader.SetUniform1i("material.texture_diffuse", 0);
@@ -1763,10 +1768,8 @@ void Game::updatePositions(int direction)
             my_state.movingAction = Animations::walk;
 
     }
-
-    dir.y = camera.free_view == true ? dir.y : 0.0f;
-
-    bt.characterContronller->setWalkDirection(btVector3(dir.x, dir.y, dir.z) * velocity);
+    if(!camera.free_view)
+        bt.characterContronller->setWalkDirection(btVector3(dir.x, dir.y, dir.z) * velocity);
     //bt.characterContronller->applyImpulse(btVector3(dir.x, dir.y, dir.z) * velocity);
     {
         btCollisionObject* obj = bt.dynamicsWorld->getCollisionObjectArray()[2];
@@ -1791,7 +1794,10 @@ void Game::updatePositions(int direction)
         my_state.rotation = rotation;
         animeModel* model = &models->Main_character;
         model->position.SetModel(pos.GetModelSpace());
-        camera.Position = glm::vec3(pos.GetVector(3, 0), pos.GetVector(3, 1) + 2.6f, pos.GetVector(3, 2));
+        if (!camera.free_view)
+            camera.Position = glm::vec3(pos.GetVector(3, 0), pos.GetVector(3, 1) + 2.6f, pos.GetVector(3, 2));
+        else
+            camera.ProcessKeyboard(direction, deltaTime);
         model->updateAABB();
         model->isMoved = true;
     }

@@ -493,7 +493,7 @@ void GUI_Process(GLFWwindow* window, KeyInput& keyinput)
         if (ImGui::Button("Close Me"))
             keyinput.animation_window = false;
         ImGui::Checkbox("change animation", &keyinput.chage_animation);
-        ImGui::SliderInt("animation type", &keyinput.animation_type, 0, Animations::MAX);
+        ImGui::SliderInt("animation type", &keyinput.animation_type, 0, Animations::MAX - 1);
         ImGui::End();
     }
     //fxaa

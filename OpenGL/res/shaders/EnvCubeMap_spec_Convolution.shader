@@ -21,6 +21,7 @@ in VS_OUT
 vec3 pos;
 }fs_in;
 uniform samplerCube environmentMap;
+uniform samplerCube tensorMap;
 const float PI = 3.14159265359;
 uniform float roughness;
 //function
@@ -48,6 +49,7 @@ void main()
         if (NdotL > 0.0)
         {
             prefilteredColor += texture(environmentMap, L).rgb * NdotL;
+            //prefilteredColor += texture(tensorMap, L).rgb * NdotL;
             totalWeight += NdotL;
         }
     }
