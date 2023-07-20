@@ -3,8 +3,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <thread>
-#include <future>
 #define GLM_ENABLE_EXPERIMENTAL
 struct BoneInfo
 {
@@ -194,23 +192,10 @@ public:
 
 	void Update(float animationTime)
 	{
-		/*std::promise<glm::mat4> translation;
-		std::future<glm::mat4> f = translation.get_future();
-		std::thread t1([&]() {translation.set_value(InterpolatePosition(animationTime)); });
-		t1.join();*/
 		glm::mat4 translation = InterpolatePosition(animationTime);
 		glm::mat4 rotation = InterpolateRotation(animationTime);
 		glm::mat4 scale = InterpolateScaling(animationTime);
-		/*for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{
-				std::cout << scale[i][j] << "  ";
-				if (j == 3)
-					std::cout << std::endl;
-			}
-		}
-		std::cout << std::endl;*/
+
 		m_LocalTransform = translation * rotation * scale;
 	}
 	glm::mat4 GetLocalTransform() { return m_LocalTransform; }

@@ -1,6 +1,5 @@
 #include "Game.h"
-#include <thread>
-#include <Windows.h>
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "vender/stb_image/stb_image_write.h"
 void Generate_Instance(Model& m, int amount);

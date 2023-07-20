@@ -68,11 +68,9 @@ unsigned int Shader::CompileShader(unsigned int type,
     if (result == GL_FALSE)
     {
         int length;
-        std::cout << "failed." << std::endl;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
         char* message = (char*)_malloca(length * sizeof(char));
         glGetShaderInfoLog(id, length, &length, message);
-        std::cout << "failed to compile shader!" << std::endl;
         std::string erro_message;
         switch (type)
         {
@@ -87,7 +85,7 @@ unsigned int Shader::CompileShader(unsigned int type,
         case GL_TESS_EVALUATION_SHADER:erro_message = "tess_eval ";
             break;
         }
-        std::cout << erro_message << std::endl;
+        std::cout << "failed to compile shader " << erro_message << "in " << m_FilePath <<  std::endl;
         std::cout << message << std::endl;
         glDeleteShader(id);
         return 0;
