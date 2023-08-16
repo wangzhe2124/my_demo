@@ -161,7 +161,7 @@ float DirShadowCalculation(vec3 normal, vec3 FragPos)
 	float costheta = max(dot(normal, -lightDir), 0);
 	float theta = acos(costheta);
 	float texSize = 1.0 / textureSize(shadowMap.csm_map[index], 0).x ;
-	float bias = sun_sm_bias * texSize * tan(theta);//根据视锥体z高度调整bias
+	float bias = sun_sm_bias * texSize * tan(0.2 * theta);//根据视锥体z高度调整bias
 	float shadow = 0.0;
 
 /*	float mean = texture(shadowMap.csm_map[index], projCoords.xy, 3).r;
@@ -251,7 +251,7 @@ float SpotShadowCalculation(vec3 normal, vec3 FragPos)
 	projCoords = projCoords * 0.5 + 0.5;//-1到1 变成0到1
 	float closestDepth = texture(shadowMap.SpotShadow, projCoords.xy).r;//距离光源位置最近的深度
 	float currentDepth = projCoords.z;//光源视角下当前片元的深度
-	float shadow = currentDepth - 0.01 > closestDepth ? 1.0 : 0.0;
+	float shadow = currentDepth -0.001 > closestDepth ? 1.0 : 0.0;
 	/*float shadow = 0.0;
 	float texelSize = 1.0 / textureSize(shadowMap.SpotShadow, 0).x;
 	vec2 poissonDisk[25];

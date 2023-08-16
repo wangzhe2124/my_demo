@@ -31,13 +31,13 @@ public:
 		overlappingPairCache = new btDbvtBroadphase();
 		solver = new btSequentialImpulseConstraintSolver;
 		dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
-		dynamicsWorld->setGravity(btVector3(0, -10, 0));
+		dynamicsWorld->setGravity(btVector3(0, -100, 0));
 	}
 	~Bt()
 	{
 		for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
 		{
-			std::cout << i << std::endl;
+			//std::cout << i << std::endl;
 			btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
 			btRigidBody* body = btRigidBody::upcast(obj);
 			if (body && body->getMotionState())
@@ -83,7 +83,7 @@ public:
 		Transform.setIdentity();
 		Transform.setOrigin(origin);
 		btDefaultMotionState* myMotionState = new btDefaultMotionState(Transform);
-		btScalar mass(5.);
+		btScalar mass(0.);
 
 		btVector3 localInertia(0, 0, 0);
 		if (mass != 0.f)
@@ -110,7 +110,7 @@ public:
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape);
 		btRigidBody* body = new btRigidBody(rbInfo);
 		body->setRestitution(btScalar(0.5));
-		body->setFriction(btScalar(0.2));
+		body->setFriction(btScalar(20));
 		//add the body to the dynamics world
 		dynamicsWorld->addRigidBody(body);
 	}
@@ -152,7 +152,7 @@ public:
 		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
 		btRigidBody* body = new btRigidBody(rbInfo);
 		//body->setRestitution(btScalar(0.1));
-		body->setFriction(btScalar(10));
+		body->setFriction(btScalar(100));
 		dynamicsWorld->addRigidBody(body);
 	}
 

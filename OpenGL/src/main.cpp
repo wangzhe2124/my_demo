@@ -386,7 +386,7 @@ void GUI_Process(GLFWwindow* window, KeyInput& keyinput)
     
     
     ImGui::SliderFloat("exposure", &keyinput.exposure, 0.0f, 100.0f);
-    ImGui::SliderInt("tess level", &keyinput.tess_level, 0, 3);
+    ImGui::SliderInt("tess level", &keyinput.tess_level, 0, 16);
     //sun
     ImGui::Checkbox("sun Window", &keyinput.sun_window);
     if (keyinput.sun_window)
@@ -394,10 +394,10 @@ void GUI_Process(GLFWwindow* window, KeyInput& keyinput)
         ImGui::Begin("sun Window", &keyinput.sun_window);
         if (ImGui::Button("Close Me"))
             keyinput.sun_window = false;
-        ImGui::SliderFloat("SunIntensity", &keyinput.SunIntensity, 0.0f, 10.0f, "%5.f", 1.0f);
+        ImGui::SliderFloat("SunIntensity", &keyinput.SunIntensity, 0.0f, 30.0f, "%5.f", 1.0f);
         ImGui::Separator();
-        ImGui::SliderFloat("sm_bias", &keyinput.sun_sm_bias, 0.0f, 1.0f);
-        ImGui::SliderFloat("sun speed", &keyinput.sun_speed, 0.0f, 50.0f);
+        ImGui::SliderFloat("sm_bias", &keyinput.sun_sm_bias, 0.0f, 5.0f);
+        ImGui::SliderFloat("sun speed", &keyinput.sun_speed, 0.0f, 50000.0f);
         ImGui::SliderFloat("sun pcf radius", &keyinput.sun_pcf_radius, 0.0f, 10.0f);
         ImGui::Checkbox("sun pcf", &keyinput.sun_pcf);
 

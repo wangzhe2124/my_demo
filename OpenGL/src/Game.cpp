@@ -45,11 +45,15 @@ void Game::Gaussian_Blured_Texture(int j, unsigned int times, Shader& blooming_b
 
 void Game::Update_Sun()
 {
-    float sun_height = 20000;
-    float east_x = static_cast<float>(sin(glfwGetTime() * keyinput.sun_speed)) * sun_height;
-    float west_y = static_cast<float>(cos(glfwGetTime() * keyinput.sun_speed)) * sun_height;
-    sun.Sun_Position = glm::vec3(east_x, west_y, -100.0f) + camera.Position;
-    sun.Sun_Direction = -glm::vec3(east_x, west_y, -100.0f);
+    float sun_height = 2000;
+    float phase = keyinput.sun_speed + 1.0f;
+
+    float time = float(std::fmod(glfwGetTime(), phase)) / phase * PI;
+    float x = static_cast<float>(abs(sin(time))) * sun_height;
+    float y = x;
+    float z = static_cast<float>(-cos(time)) * sun_height;
+    sun.Sun_Position = glm::vec3(x, y, z) + camera.Position;
+    sun.Sun_Direction = -sun.Sun_Position;
 }
 
 void Game::Update_Pointlight()
@@ -589,11 +593,15 @@ void Game::Generate_SkyBox()
         shader.SetUniformmatri4fv("model", pointlight.space[i].GetModelSpace());
         renderer.DrawElement(*models->Sphere.va, *models->Sphere.ib, shader);
     }
+    //sun
+    shader.Bind();
+    shader.SetUniformmatri4fv("view", camera.GetViewMatrix());
+
+    shader.SetUniformmatri4fv("projection", camera.GetProjectionMatrix());
     shader.SetUniform3f("color", keyinput.SunColor * keyinput.SunIntensity * glm::vec3(10));
     ModelSpace dirlightspace;//太阳位置会变化，所以动态改变位置       
     dirlightspace.Translate(sun.Sun_Position);
-    dirlightspace.Scale(500);
-    //dirlightspace.Scale(glm::vec3(0.3f));
+    dirlightspace.Scale(50);
     shader.SetUniformmatri4fv("model", dirlightspace.GetModelSpace());
     renderer.DrawElement(*models->Sphere.va, *models->Sphere.ib, shader);
     //天空盒       
@@ -1286,9 +1294,9 @@ void Game::Generate_TextParticle()
     {
         RenderText(shaders->text_shader, "welcome to the demo", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
     }
-    RenderText(shaders->text_shader, "x: " + std::to_string(camera.Position.x), screenWidth * 0.95f, screenHeight * 0.95f, 0.5f, glm::vec3(1.0f));
-    RenderText(shaders->text_shader, "y: " + std::to_string(camera.Position.y), screenWidth * 0.95f, screenHeight * 0.93f, 0.5f, glm::vec3(1.0f));
-    RenderText(shaders->text_shader, "z: " + std::to_string(camera.Position.z), screenWidth * 0.95f, screenHeight * 0.91f, 0.5f, glm::vec3(1.0f));
+    RenderText(shaders->text_shader, "x: " + std::to_string(camera.Position.x), screenWidth * 0.94f, screenHeight * 0.95f, 0.5f, glm::vec3(1.0f));
+    RenderText(shaders->text_shader, "y: " + std::to_string(camera.Position.y - 2.6), screenWidth * 0.94f, screenHeight * 0.92f, 0.5f, glm::vec3(1.0f));
+    RenderText(shaders->text_shader, "z: " + std::to_string(camera.Position.z), screenWidth * 0.94f, screenHeight * 0.89f, 0.5f, glm::vec3(1.0f));
     RenderText(shaders->text_shader, "FPS: " + std::to_string(int(1.0f / deltaTime)), screenWidth * 0.93f, 0, 0.5f, glm::vec3(1.0f));
 
     if (keyinput.dialogMode)
@@ -1333,8 +1341,9 @@ void Game::processKeyInuput(int key, int action, int mode)
     keyinput.ProcessKey(key, action);
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
-        float v0 = 10;
-        bt.characterContronller->jump(btVector3(0, 1, 0) * v0);//h = v0 * v0 / 2/ g
+        float v0 = 8;
+        btVector3 dir = btVector3(0, 1, 0) + btVector3(camera.Front.x, camera.Front.y, camera.Front.z) * 0.2;
+        bt.characterContronller->jump(dir * v0);//h = v0 * v0 / 2/ g
     }
 }
 //shake
@@ -1628,16 +1637,23 @@ void Game::drawModelsAABB()
 void Game::initializeBullet()
 {
     bt.addPlane();
-    bt.addSphere(1, btVector3(-5, 10, 0), 100);
-    bt.addSDF();
+    bt.addSphere(1, btVector3(5, 10, -5), 100);
     {
         animeModel* model = &models->Main_character;
         std::vector<float> aabb = model->aabb;
         glm::vec3 center = glm::vec3((aabb[min_x] + aabb[max_x]) * 0.5f, (aabb[min_y] + aabb[max_y]) * 0.5f, (aabb[min_z] + aabb[max_z]) * 0.5f);
         glm::vec3 extent = glm::vec3((aabb[max_x] - aabb[min_x]) * 0.5f, (aabb[max_y] - aabb[min_y]) * 0.5f, (aabb[max_z] - aabb[min_z]) * 0.5f);
+        std::cout << "x:" << aabb[min_x] << "," << aabb[max_x] << std::endl;
+        float radius = min(extent.x, extent.z);
+        float height = 2* (extent.y - radius);
+        std::cout << "y:" << extent.y << std::endl;
+        std::cout << "capsule radius:" << radius << ", height:" << height << std::endl;
         //bt.addBox(btVector3(center.x, center.y - extent.y, center.z), btVector3(extent.x * 2, extent.y * 2, extent.z * 2));
-        bt.addCharacterCapsule(0.5f, btVector3(0, 5, 0), 1, 100);
+        bt.addCharacterCapsule(radius, btVector3(0, 0, 0), height, 100);
     }
+    bt.addBox(btVector3(5, 1, 0), btVector3(1, 1, 1));
+    bt.addBox(btVector3(5, 3, 2), btVector3(1, 1, 1));
+    bt.addBox(btVector3(5, 5, 4), btVector3(1, 1, 1));
 }
 
 
@@ -1693,7 +1709,7 @@ void Game::renderBtWorld(Shader& shader)
         pos.Rotate(-90.0, glm::vec3(1.0, 0.0, 0.0));
 
         shader.SetUniform1f("metallic", 0.8);
-        shader.SetUniform1f("roughness", 0);
+        shader.SetUniform1f("roughness", 0.5);
         textures->floor_diffuse.Bind(0);
         shader.SetUniform1i("material.texture_diffuse", 0);
         textures->floor_specular.Bind(1);
@@ -1706,6 +1722,32 @@ void Game::renderBtWorld(Shader& shader)
         shader.SetUniform1i("isSeized", 0);
         shader.SetUniform1i("index", models->Floor.index);
         renderer.DrawArray(*models->Floor.va, shader);
+    }
+    for (int i = 3; i < 6; i++)
+    {
+        btCollisionObject* obj = bt.dynamicsWorld->getCollisionObjectArray()[i];
+        btRigidBody* body = btRigidBody::upcast(obj);
+
+        btTransform trans;
+        glm::vec3 vect;
+        if (body && body->getMotionState())
+        {
+            body->getMotionState()->getWorldTransform(trans);
+        }
+        else
+        {
+            trans = obj->getWorldTransform();
+        }
+        vect = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
+        ModelSpace pos;
+
+        pos.Translate(vect);
+        shader.SetUniformmatri4fv("model", pos.GetModelSpace());
+        textures->Particle_texture.Bind(0);
+        shader.SetUniform1i("material.texture_diffuse", 0);
+        shader.SetUniform1i("isSeized", 0);
+        shader.SetUniform1i("index", models->Sphere.index);
+        renderer.DrawQuads(vertex_arrays->cubeQuadVa, shader);
     }
 }
 
@@ -1786,9 +1828,11 @@ void Game::updatePositions(int direction)
         }
         vect = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
         ModelSpace pos;
-        float radius = ((btCapsuleShape*)body->getCollisionShape())->getHalfHeight();
+        float radius = ((btCapsuleShape*)body->getCollisionShape())->getRadius();
+        float halfHeight = ((btCapsuleShape*)body->getCollisionShape())->getHalfHeight();
+        
         pos.Translate(vect);
-        pos.Translate(glm::vec3(0, -radius, 0));
+        pos.Translate(glm::vec3(0,-radius - halfHeight, 0));
         pos.Rotate(180 + rotation , glm::vec3(0, -1, 0));
         my_state.rotation = rotation;
         animeModel* model = &models->Main_character;
@@ -1797,6 +1841,8 @@ void Game::updatePositions(int direction)
             camera.Position = glm::vec3(pos.GetVector(3, 0), pos.GetVector(3, 1) + 2.6f, pos.GetVector(3, 2));
         else
             camera.ProcessKeyboard(direction, deltaTime);
+        btQuaternion rotationAxis(btVector3(0, 1, 0), rotation);
+        body->getWorldTransform().setRotation(rotationAxis);
         model->updateAABB();
         model->isMoved = true;
     }

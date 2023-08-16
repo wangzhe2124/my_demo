@@ -97,6 +97,11 @@ uniform bool useEnvLight;
 uniform bool usePBR;
 float metallic;
 float roughness;
+
+#define bottom 3
+#define top 6
+#define width 5
+vec4 getCloud(vec3 worldPos, vec3 cameraPos, vec4 color);
 void main()
 {
 	vec2 Texcoord = fs_in.TexCoord;
@@ -117,7 +122,27 @@ void main()
 		result += CalcEnvLight(normal, Texcoord, FragPos, occlusion);
 
 	color = vec4(result, 1.0); //+ vec4(texture(skybox, RF).rgb, 1.0);
+	vec4 cloud = getCloud(FragPos, camera.viewPos, color);
+	//color.rgb = color.rgb * (1.0 - cloud.a) + cloud.rgb;
 };
+vec4 getCloud(vec3 worldPos, vec3 cameraPos, vec4 color)
+{
+	vec3 dir = normalize(worldPos - cameraPos);
+	vec3 step = dir * 0.25;
+	vec4 sumColor = vec4(0);
+	vec3 point = worldPos;
+	for(int i  =0; i < 100; i++)
+	{
+		point += step;
+		if(bottom > point.y || point.y >top || -width > point.x || point.z > width)
+		{
+			continue;
+		}
+		float density = 0.1;
+		sumColor = sumColor + vec4(0.9, 0.8, 0.7, 1.0)* density * (1.0 - sumColor.a);
+	}
+	return sumColor;
+}
 vec3 CalcDirLight(vec3 normal, vec2 Texcoord, vec3 FragPos, float occlusion)
 {
 	vec4 texColor = texture(gAlbedoSpec, Texcoord);
